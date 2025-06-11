@@ -146,6 +146,8 @@ main {
   padding: 20px;
   top: -5vh;
   left: -100px;
+  pointer-events: none;
+  z-index: 2000;
 }
 
 textarea, input {
@@ -159,6 +161,8 @@ textarea, input {
   color: #000000;
   font-weight: bold;
   text-align: center;
+  pointer-events: auto;
+  z-index: 3000;
 }
 
 .leaf-back {
@@ -170,7 +174,7 @@ textarea, input {
   gap: 15px;
   justify-content: center;
   width: 100%;
-
+  z-index: 5000;
 }
 button {
   width: 140px;
