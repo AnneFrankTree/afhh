@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -85,7 +84,7 @@
 
 <!-- Overlay -->
 <div class="overlay" id="overlay" style="display:none;">
-  <img src="treewleaf.PNG" alt="Glowing Tree" class="glow-tree" id="glowTree" />
+  <img src="treewleaf.png" alt="Glowing Tree" class="glow-tree" id="glowTree" />
 </div>
 
 <footer>
@@ -100,6 +99,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
@@ -112,6 +112,7 @@ const firebaseConfig = {
   messagingSenderId: "239156775586",
   appId: "1:239156775586:web:d12e394fafb0c9bb9e65fb"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -191,137 +192,177 @@ function animateLeafToBranch(branch) {
     overlay.style.display = 'flex';
     overlay.offsetHeight; // force reflow
 
+function flyToTree(position, message, signature) {
+  const leaf = document.getElementById("leafCard");
+  const overlay = document.querySelector(".overlay");
+  const glowTree = document.getElementById("glowTree");
+
+  overlay.style.display = "flex";
+
+  const treeRect = glowTree.getBoundingClientRect();
+  const treeX = treeRect.left + position.x * treeRect.width;
+  const treeY = treeRect.top + position.y * treeRect.height;
+
+  const leafRect = leaf.getBoundingClientRect();
+  const offsetX = leafRect.width * 0.5;
+  const offsetY = leafRect.height * 0.7;
+
+  const leafClone = leaf.cloneNode(true);
+  leafClone.classList.add("fly-leaf");
+  leafClone.style.position = "fixed";
+  leafClone.style.left = `${leafRect.left}px`;
+  leafClone.style.top = `${leafRect.top}px`;
+  leafClone.style.zIndex = 9999;
+  document.body.appendChild(leafClone);
+
+  requestAnimationFrame(() => {
+    leafClone.style.transition = "transform 1.5s ease-in-out, left 1.5s ease-in-out, top 1.5s ease-in-out, opacity 1.5s ease-in-out";
+    leafClone.style.transform = "scale(0.3) rotate(10deg)";
+    leafClone.style.left = `${treeX - offsetX}px`;
+    leafClone.style.top = `${treeY - offsetY}px`;
+    leafClone.style.opacity = "0";
+  });
+
+  saveLeafData({ message, signature, position });
+
+  setTimeout(() => {
+    leafClone.remove();
+    overlay.style.display = "none";
+    document.body.classList.add("fade-out");
+    setTimeout(() => {
+      window.location.href = "treee.html";
+    }, 500);
+  }, 1800);
+}
+
     const leafRect = leafCard.getBoundingClientRect();
     const treeRect = glowTree.getBoundingClientRect();
     const startX = leafRect.left;
     const startY = leafRect.top;
 
-    // Dynamically calculate the stem position (bottom center)
-const stemOffsetX = leafRect.width / 2;
-const stemOffsetY = leafRect.height;
-const finalScale = 0.09;
+    // Stem is bottom center of leaf
+    const stemOffsetX = leafRect.width / 2;
+    const stemOffsetY = leafRect.height;
+    const finalScale = 0.09;
 
-// Adjusted end coordinates so stem lands on the branch
-const endX = treeRect.left + branch.x - stemOffsetX * finalScale;
-const endY = treeRect.top + branch.y - stemOffsetY * finalScale;
+    // Calculate final position so stem aligns with branch on tree
+    const endX = treeRect.left + branch.x - stemOffsetX * finalScale;
+    const endY = treeRect.top + branch.y - stemOffsetY * finalScale;
 
     const dx = endX - startX;
     const dy = endY - startY;
 
-    let angle;
-    const screenCenterX = window.innerWidth / 2;
-    if (startX < screenCenterX) {
-      // Left side of screen: random angle from -40 to 0
-      angle = -Math.random() * 40;
-    } else {
-      // Right side of screen: random angle from 0 to 40
-      angle = Math.random() * 40;
-    }
+    // Fix: make leaf fixed with high z-index to appear above overlay
+    leafCard.style.position = 'fixed';
+    leafCard.style.left = ${startX}px;
+    leafCard.style.top = ${startY}px;
+    leafCard.style.margin = '0';
+    leafCard.style.zIndex = '1001';
 
-    // 1. Clone the leaf and create a wrapper
-    const flyingLeaf = leafCard.cloneNode(true);
-    const wrapper = document.createElement('div');
-    wrapper.classList.add('leaf-wrapper');
-    wrapper.style.position = 'fixed';
-    wrapper.style.left = `${startX}px`;
-    wrapper.style.top = `${startY}px`;
-    wrapper.style.width = `${leafRect.width}px`;
-    wrapper.style.height = `${leafRect.height}px`;
-    wrapper.style.pointerEvents = 'none';
-    wrapper.style.zIndex = '10001';
-    wrapper.style.transition = 'transform 1.5s ease-in-out';
-    wrapper.style.transformOrigin = 'top left';
+    // Make overlay z-index lower
+    overlay.style.zIndex = '1000';
 
-    flyingLeaf.style.margin = '0';
-    flyingLeaf.style.width = '100%';
-    flyingLeaf.style.height = '100%';
-    flyingLeaf.style.transformOrigin = 'top left';
-    flyingLeaf.style.transition = 'none'; // rotation is visual only
+    leafCard.style.transition = 'transform 1s ease-in-out';
+    leafCard.style.transformOrigin = 'top left';
+    // Trigger transform: move and scale leaf
+    leafCard.style.transform = translate(${dx}px, ${dy}px) scale(${finalScale});
 
-    // 2. Apply visual rotation to the inner leaf
-    flyingLeaf.style.transform = `rotate(${angle}deg)`;
+    // Wait for transition to finish
+    leafCard.addEventListener('transitionend', function handler() {
+      leafCard.removeEventListener('transitionend', handler);
 
-    // 3. Append leaf to wrapper, and wrapper to body
-    wrapper.appendChild(flyingLeaf);
-    document.body.appendChild(wrapper);
+      // Clone leaf for flying + rotation animation
+      const flyingLeaf = leafCard.cloneNode(true);
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('leaf-wrapper');
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = ${startX}px;
+      wrapper.style.top = ${startY}px;
+      wrapper.style.width = ${leafRect.width}px;
+      wrapper.style.height = ${leafRect.height}px;
+      wrapper.style.pointerEvents = 'none'; // prevent interaction
+      wrapper.style.zIndex = '1002'; // above original leaf and overlay
+      wrapper.appendChild(flyingLeaf);
+      document.body.appendChild(wrapper);
 
-    // 4. Animate the wrapper (not the leaf)
-    requestAnimationFrame(() => {
-      // Use the final scale consistently here
-      wrapper.style.transform = `translate(${dx}px, ${dy}px) scale(${finalScale})`;
+      // Decide rotation angle based on side of screen
+      const screenCenterX = window.innerWidth / 2;
+      let angle;
+      if (startX < screenCenterX) {
+        angle = -Math.random() * 40; // Left side: -40 to 0 degrees
+      } else {
+        angle = Math.random() * 40;  // Right side: 0 to 40 degrees
+      }
+
+      // Animate flying leaf with CSS transitions
+      requestAnimationFrame(() => {
+        wrapper.style.transition = 'transform 2s ease-in-out, opacity 2s ease-in-out';
+        wrapper.style.transform = translate(${dx}px, ${dy}px) scale(${finalScale}) rotate(${angle}deg);
+        wrapper.style.opacity = '0';
+      });
+
+      // After flying animation completes
+      wrapper.addEventListener('transitionend', () => {
+        wrapper.remove();
+        overlay.style.display = 'none';
+
+        // Reset original leaf styles (including position and z-index)
+        leafCard.style.transition = 'none';
+        leafCard.style.transform = 'none';
+        leafCard.style.position = '';
+        leafCard.style.left = '';
+        leafCard.style.top = '';
+        leafCard.style.margin = '';
+        leafCard.style.zIndex = '';
+        leafCard.classList.remove('flipped');
+        messageInput.value = '';
+        signatureInput.value = '';
+
+        resolve();
+      }, { once: true });
     });
-
-    wrapper.addEventListener('transitionend', () => {
-      wrapper.style.transition = 'none';
-      wrapper.style.position = 'absolute';
-
-      const overlayRect = overlay.getBoundingClientRect();
-      const branchXInOverlay = branch.x + (treeRect.left - overlayRect.left);
-      const branchYInOverlay = branch.y + (treeRect.top - overlayRect.top);
-
-      wrapper.style.left = `${branchXInOverlay - stemOffsetX * finalScale}px`;
-      wrapper.style.top = `${branchYInOverlay - stemOffsetY * finalScale}px`;
-      wrapper.style.transform = `scale(${finalScale})`;
-
-      overlay.appendChild(wrapper);
-      leafCard.style.visibility = 'visible';
-
-      resolve();
-    }, { once: true });
   });
 }
 
-async function onSendClick() {
-  const message = document.getElementById('messageInput').value;
-  const signature = document.getElementById('signatureInput').value;
-  const leafPosition = { x: yourXValue, y: yourYValue }; // your logic for position
 
-  try {
-    // Save to Firestore
-    const docRef = await addDoc(collection(db, "leaves"), {
-      message,
-      signature,
-      leafPosition,
-      timestamp: serverTimestamp(),
-    });
-
-    // Redirect to tree page with new leaf id in URL
-    window.location.href = `treee.html?newLeafId=${docRef.id}`;
-  } catch (error) {
-    console.error("Error adding document: ", error);
-  }
-}
-
-
-// — send button —
+// — On send button click:
 sendBtn.addEventListener('click', async () => {
-  const message   = messageInput.value.trim();
+  const message = messageInput.value.trim();
   const signature = signatureInput.value.trim();
 
-  if (message.length < 10) {
-    return alert('Please write a thoughtful message (at least 3 sentences).');
+  // Validation: message min length and signature not empty
+  if (message.length < 15) {
+    alert('Please write at least 3 sentences in your message.');
+    return;
   }
   if (!signature) {
-    return alert('Please sign your name.');
+    alert('Please sign your name on the back of the leaf.');
+    return;
   }
 
+  // Pick random branch coordinate
   const branch = pickRandomBranch();
 
+const treeRect = glowTree.getBoundingClientRect();
+const relativeBrancxh = {
+	x: branch.x / treeRect.width,
+	y: branch.y / treeRect.height
+};
+
+  // Save data first
   try {
-    // 1) save to Firestore
-    await saveLeafToFirestore(message, signature, branch);
-
-    // 2) animate
-    await animateLeafToBranch(branch);
-
-    // 3) reset form & flip
-    messageInput.value   = '';
-    signatureInput.value = '';
-    leafCard.classList.remove('flipped');
-  } catch (err) {
-    console.error(err);
-    alert('Sorry, something went wrong. Please try again.');
+    await saveLeafToFirestore(message, signature, relativeBranch);
+  } catch (error) {
+    alert('Error saving your message. Please try again.');
+    console.error(error);
+    return;
   }
+
+  // Animate leaf flying to branch
+  await animateLeafToBranch(branch);
+
+  // After animation, you could redirect or show success message
+  alert('Thank you for your message! It has been added to the tree.');
 });
 </script>
 
