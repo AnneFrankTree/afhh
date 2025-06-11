@@ -165,11 +165,12 @@ textarea, input {
   transform: rotateY(180deg);
 }
 .button-group {
-  margin-top: 40vh;
+  margin-top: 33vh;
   display: flex;
   gap: 15px;
   justify-content: center;
   width: 100%;
+	top: 200px;
 }
 button {
   width: 140px;
