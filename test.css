@@ -134,8 +134,8 @@ main {
 
 .leaf-front, .leaf-back {
   position: absolute;
-  width: 500px;
-  height: 500px;
+  width: 100%;
+  height: 100%;
   background-image: url('leaf (2).png'); 
   background-size: cover;
   background-position: center;
