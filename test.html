@@ -99,11 +99,10 @@ import {
   getFirestore,
   collection,
   addDoc,
-  getDocs,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
-// — Firebase setup —
+// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyCJC1HnvrzTmQZ33bKB58KEArHoU9MCWsI",
   authDomain: "annefrankleaves.firebaseapp.com",
@@ -116,68 +115,59 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// — DOM refs —
-const leafCard      = document.getElementById('leafCard');
-const flipBtn       = document.getElementById('flipBtn');
-const sendBtn       = document.getElementById('sendBtn');
-const messageInput  = document.querySelector('.leaf-message');
-const signatureInput= document.querySelector('.leaf-signature');
-const overlay       = document.getElementById('overlay');
-const glowTree      = document.getElementById('glowTree');
+// DOM references
+const leafCard = document.getElementById('leafCard');
+const flipBtn = document.getElementById('flipBtn');
+const sendBtn = document.getElementById('sendBtn');
+const messageInput = document.querySelector('.leaf-message');
+const signatureInput = document.querySelector('.leaf-signature');
+const overlay = document.getElementById('overlay');
+const glowTree = document.getElementById('glowTree');
 
-// — your branch coords —
+// Example branch coordinates in pixels relative to your tree image size (adjust these to your actual tree image!)
 const branchCoordinates = [
-  { x: 207, y: 288 }, { x: 194, y: 288 }, { x: 202, y: 281 }, { x: 163, y: 278 },
-  { x: 180, y: 274 }, { x: 177, y: 263 }, { x: 201, y: 257 }, { x: 194, y: 252 },
-  { x: 147, y: 265 }, { x: 128, y: 256 }, { x: 145, y: 254 }, { x: 122, y: 238 },
-  { x: 123, y: 226 }, { x: 138, y: 221 }, { x: 153, y: 227 }, { x: 235, y: 222 },
-  { x: 215, y: 204 }, { x: 188, y: 207 }, { x: 202, y: 216 }, { x: 191, y: 182 },
-  { x: 174, y: 178 }, { x: 186, y: 190 }, { x: 146, y: 194 }, { x: 132, y: 184 },
-  { x: 110, y: 182 }, { x: 117, y: 202 }, { x: 119, y: 163 }, { x: 119, y: 144 },
-  { x: 130, y: 156 }, { x: 140, y: 151 }, { x: 150, y: 162 }, { x: 189, y: 208 },
-  { x: 178, y: 179 }, { x: 192, y: 184 }, { x: 243, y: 170 }, { x: 248, y: 187 },
-  { x: 227, y: 156 }, { x: 218, y: 158 }, { x: 210, y: 144 }, { x: 164, y: 157 },
-  { x: 158, y: 128 }, { x: 147, y: 110 }, { x: 135, y: 110 }, { x: 123, y: 122 },
-  { x: 243, y: 131 }, { x: 238, y: 118 }, { x: 222, y: 104 }, { x: 211, y: 104 },
-  { x: 206, y: 91 },  { x: 195, y: 112 }, { x: 174, y: 71 },  { x: 182, y: 54 },
-  { x: 187, y: 69 },  { x: 263, y: 96 },  { x: 257, y: 86 },  { x: 250, y: 70 },
-  { x: 211, y: 78 },  { x: 201, y: 46 },  { x: 214, y: 42 },  { x: 227, y: 56 },
-  { x: 239, y: 50 },  { x: 234, y: 35 },  { x: 251, y: 71 },  { x: 264, y: 90 },
-  { x: 266, y: 55 },  { x: 258, y: 38 },  { x: 251, y: 42 },  { x: 279, y: 35 },
-  { x: 294, y: 33 },  { x: 286, y: 44 },  { x: 298, y: 55 },  { x: 302, y: 82 },
-  { x: 314, y: 73 },  { x: 312, y: 37 },  { x: 321, y: 41 },  { x: 330, y: 51 },
-  { x: 346, y: 41 },  { x: 339, y: 60 },  { x: 316, y: 96 },  { x: 301, y: 108 },
-  { x: 291, y: 126 }, { x: 360, y: 53 },  { x: 367, y: 46 },  { x: 379, y: 60 },
-  { x: 365, y: 78 },  { x: 300, y: 169 }, { x: 318, y: 162 }, { x: 314, y: 150 },
-  { x: 342, y: 120 }, { x: 371, y: 97 },  { x: 359, y: 106 }, { x: 362, y: 117 },
-  { x: 385, y: 82 },  { x: 397, y: 83 },  { x: 409, y: 92 },  { x: 415, y: 104 },
-  { x: 394, y: 131 }, { x: 423, y: 120 }, { x: 412, y: 133 }, { x: 426, y: 132 },
-  { x: 350, y: 170 }, { x: 361, y: 169 }, { x: 321, y: 213 }, { x: 329, y: 217 },
-  { x: 340, y: 206 }, { x: 384, y: 165 }, { x: 397, y: 164 }, { x: 421, y: 152 },
-  { x: 414, y: 169 }, { x: 438, y: 152 }, { x: 426, y: 167 }, { x: 443, y: 168 },
-  { x: 419, y: 194 }, { x: 334, y: 214 }, { x: 322, y: 213 }, { x: 332, y: 270 },
-  { x: 345, y: 284 }, { x: 349, y: 259 }, { x: 372, y: 274 }, { x: 365, y: 282 },
-  { x: 383, y: 260 }, { x: 397, y: 274 }, { x: 411, y: 263 }, { x: 402, y: 254 },
-  { x: 384, y: 227 }, { x: 398, y: 214 }, { x: 414, y: 224 }, { x: 425, y: 242 },
-  { x: 434, y: 231 }, { x: 430, y: 210 }, { x: 419, y: 194 }, { x: 429, y: 202 },
-  { x: 442, y: 194 }, { x: 249, y: 194 }, { x: 240, y: 239 }, { x: 330, y: 267 },
-  { x: 238, y: 126 }, { x: 237, y: 108 }, { x: 289, y: 122 }
+  { x: 207, y: 288 }, { x: 194, y: 288 }, { x: 202, y: 281 }, { x: 163, y: 278 }, { x: 180, y: 274 }, 
+  { x: 177, y: 263 }, { x: 201, y: 257 }, { x: 194, y: 252 }, { x: 147, y: 265 }, { x: 128, y: 256 }, 
+  { x: 145, y: 254 }, { x: 122, y: 238 }, { x: 123, y: 226 }, { x: 138, y: 221 }, { x: 153, y: 227 }, 
+  { x: 235, y: 222 }, { x: 215, y: 204 }, { x: 188, y: 207 }, { x: 202, y: 216 }, { x: 191, y: 182 }, 
+  { x: 174, y: 178 }, { x: 186, y: 190 }, { x: 146, y: 194 }, { x: 132, y: 184 }, { x: 110, y: 182 }, 
+  { x: 117, y: 202 }, { x: 119, y: 163 }, { x: 119, y: 144 }, { x: 130, y: 156 }, { x: 140, y: 151 }, 
+  { x: 150, y: 162 }, { x: 189, y: 208 }, { x: 178, y: 179 }, { x: 192, y: 184 }, { x: 243, y: 170 }, 
+  { x: 248, y: 187 }, { x: 227, y: 156 }, { x: 218, y: 158 }, { x: 210, y: 144 }, { x: 164, y: 157 }, 
+  { x: 158, y: 128 }, { x: 147, y: 110 }, { x: 135, y: 110 }, { x: 123, y: 122 }, { x: 243, y: 131 }, 
+  { x: 238, y: 118 }, { x: 222, y: 104 }, { x: 211, y: 104 }, { x: 206, y: 91 },  { x: 195, y: 112 }, 
+  { x: 174, y: 71 },  { x: 182, y: 54 }, { x: 187, y: 69 },  { x: 263, y: 96 },  { x: 257, y: 86 },  
+  { x: 250, y: 70 }, { x: 211, y: 78 },  { x: 201, y: 46 },  { x: 214, y: 42 },  { x: 227, y: 56 }, 
+  { x: 239, y: 50 },  { x: 234, y: 35 },  { x: 251, y: 71 },  { x: 264, y: 90 }, { x: 266, y: 55 },  
+  { x: 258, y: 38 },  { x: 251, y: 42 },  { x: 279, y: 35 }, { x: 294, y: 33 },  { x: 286, y: 44 },  
+  { x: 298, y: 55 },  { x: 302, y: 82 }, { x: 314, y: 73 },  { x: 312, y: 37 },  { x: 321, y: 41 },  
+  { x: 330, y: 51 }, { x: 346, y: 41 },  { x: 339, y: 60 },  { x: 316, y: 96 },  { x: 301, y: 108 }, 
+  { x: 291, y: 126 }, { x: 360, y: 53 },  { x: 367, y: 46 },  { x: 379, y: 60 }, { x: 365, y: 78 },  
+  { x: 300, y: 169 }, { x: 318, y: 162 }, { x: 314, y: 150 }, { x: 342, y: 120 }, { x: 371, y: 97 },  
+  { x: 359, y: 106 }, { x: 362, y: 117 }, { x: 385, y: 82 },  { x: 397, y: 83 },  { x: 409, y: 92 },  
+  { x: 415, y: 104 }, { x: 394, y: 131 }, { x: 423, y: 120 }, { x: 412, y: 133 }, { x: 426, y: 132 }, 
+  { x: 350, y: 170 }, { x: 361, y: 169 }, { x: 321, y: 213 }, { x: 329, y: 217 }, { x: 340, y: 206 }, 
+  { x: 384, y: 165 }, { x: 397, y: 164 }, { x: 421, y: 152 }, { x: 414, y: 169 }, { x: 438, y: 152 }, 
+  { x: 426, y: 167 }, { x: 443, y: 168 }, { x: 419, y: 194 }, { x: 334, y: 214 }, { x: 322, y: 213 }, 
+  { x: 332, y: 270 }, { x: 345, y: 284 }, { x: 349, y: 259 }, { x: 372, y: 274 }, { x: 365, y: 282 }, 
+  { x: 383, y: 260 }, { x: 397, y: 274 }, { x: 411, y: 263 }, { x: 402, y: 254 }, { x: 384, y: 227 }, 
+  { x: 398, y: 214 }, { x: 414, y: 224 }, { x: 425, y: 242 }, { x: 434, y: 231 }, { x: 430, y: 210 }, 
+  { x: 419, y: 194 }, { x: 429, y: 202 }, { x: 442, y: 194 }, { x: 249, y: 194 }, { x: 240, y: 239 }, 
+  { x: 330, y: 267 }, { x: 238, y: 126 }, { x: 237, y: 108 }, { x: 289, y: 122 }
 ];
 
 
-// — flip front/back —
+// Flip leaf front/back
 flipBtn.addEventListener('click', () => {
   leafCard.classList.toggle('flipped');
 });
 
-// — helper: pick one branch at random —
+// Pick random branch from array
 function pickRandomBranch() {
-  return branchCoordinates[
-    Math.floor(Math.random() * branchCoordinates.length)
-  ];
+  return branchCoordinates[Math.floor(Math.random() * branchCoordinates.length)];
 }
 
-// — save to Firestore —
+// Save leaf data to Firestore
 async function saveLeafToFirestore(message, signature, position) {
   return addDoc(collection(db, "leaves"), {
     message,
@@ -187,150 +177,73 @@ async function saveLeafToFirestore(message, signature, position) {
   });
 }
 
-function animateLeafToBranch(branch) {
-  return new Promise(resolve => {
+// Animate leaf flying to branch position on tree
+function flyToTree(branch) {
+  return new Promise((resolve) => {
     overlay.style.display = 'flex';
-    overlay.offsetHeight; // force reflow
-
-function flyToTree(position, message, signature) {
-  const leaf = document.getElementById("leafCard");
-  const overlay = document.querySelector(".overlay");
-  const glowTree = document.getElementById("glowTree");
-
-  overlay.style.display = "flex";
-
-  const treeRect = glowTree.getBoundingClientRect();
-  const treeX = treeRect.left + position.x * treeRect.width;
-  const treeY = treeRect.top + position.y * treeRect.height;
-
-  const leafRect = leaf.getBoundingClientRect();
-  const offsetX = leafRect.width * 0.5;
-  const offsetY = leafRect.height * 0.7;
-
-  const leafClone = leaf.cloneNode(true);
-  leafClone.classList.add("fly-leaf");
-  leafClone.style.position = "fixed";
-  leafClone.style.left = `${leafRect.left}px`;
-  leafClone.style.top = `${leafRect.top}px`;
-  leafClone.style.zIndex = 9999;
-  document.body.appendChild(leafClone);
-
-  requestAnimationFrame(() => {
-    leafClone.style.transition = "transform 1.5s ease-in-out, left 1.5s ease-in-out, top 1.5s ease-in-out, opacity 1.5s ease-in-out";
-    leafClone.style.transform = "scale(0.3) rotate(10deg)";
-    leafClone.style.left = `${treeX - offsetX}px`;
-    leafClone.style.top = `${treeY - offsetY}px`;
-    leafClone.style.opacity = "0";
-  });
-
-  saveLeafToFirestore(message, signature, position);
-
-  setTimeout(() => {
-    leafClone.remove();
-    overlay.style.display = "none";
-    document.body.classList.add("fade-out");
-    setTimeout(() => {
-      window.location.href = "treee.html";
-    }, 500);
-  }, 1800);
-}
 
     const leafRect = leafCard.getBoundingClientRect();
     const treeRect = glowTree.getBoundingClientRect();
-    const startX = leafRect.left;
-    const startY = leafRect.top;
 
-    // Stem is bottom center of leaf
+    // Calculate absolute target position so stem aligns with branch on tree
+    // Assume stem is bottom center of leaf
     const stemOffsetX = leafRect.width / 2;
     const stemOffsetY = leafRect.height;
+
+    // Scale down the leaf to about 9%
     const finalScale = 0.09;
 
-    // Calculate final position so stem aligns with branch on tree
     const endX = treeRect.left + branch.x - stemOffsetX * finalScale;
     const endY = treeRect.top + branch.y - stemOffsetY * finalScale;
+
+    const startX = leafRect.left;
+    const startY = leafRect.top;
 
     const dx = endX - startX;
     const dy = endY - startY;
 
-    // Fix: make leaf fixed with high z-index to appear above overlay
+    // Set leafCard fixed on screen to animate independently
     leafCard.style.position = 'fixed';
-    leafCard.style.left = '${startX}px';
-    leafCard.style.top = '${startY}px';
+    leafCard.style.left = `${startX}px`;
+    leafCard.style.top = `${startY}px`;
     leafCard.style.margin = '0';
     leafCard.style.zIndex = '1001';
-
-    // Make overlay z-index lower
-    overlay.style.zIndex = '1000';
-
-    leafCard.style.transition = 'transform 1s ease-in-out';
+    leafCard.style.transition = 'transform 1.5s ease-in-out';
     leafCard.style.transformOrigin = 'top left';
-    // Trigger transform: move and scale leaf
-    leafCard.style.transform = 'translate(${dx}px, ${dy}px) scale(${finalScale})';
 
-    // Wait for transition to finish
+    // Start the animation: translate and scale
+    requestAnimationFrame(() => {
+      leafCard.style.transform = `translate(${dx}px, ${dy}px) scale(${finalScale}) rotate(10deg)`;
+    });
+
     leafCard.addEventListener('transitionend', function handler() {
       leafCard.removeEventListener('transitionend', handler);
 
-      // Clone leaf for flying + rotation animation
-      const flyingLeaf = leafCard.cloneNode(true);
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('leaf-wrapper');
-      wrapper.style.position = 'fixed';
-      wrapper.style.left = '${startX}px';
-      wrapper.style.top = '${startY}px';
-      wrapper.style.width = '${leafRect.width}px';
-      wrapper.style.height = '${leafRect.height}px';
-      wrapper.style.pointerEvents = 'none'; // prevent interaction
-      wrapper.style.zIndex = '1002'; // above original leaf and overlay
-      wrapper.appendChild(flyingLeaf);
-      document.body.appendChild(wrapper);
+      // Hide overlay and reset leaf card style
+      overlay.style.display = 'none';
 
-      // Decide rotation angle based on side of screen
-      const screenCenterX = window.innerWidth / 2;
-      let angle;
-      if (startX < screenCenterX) {
-        angle = -Math.random() * 40; // Left side: -40 to 0 degrees
-      } else {
-        angle = Math.random() * 40;  // Right side: 0 to 40 degrees
-      }
+      leafCard.style.transition = 'none';
+      leafCard.style.transform = 'none';
+      leafCard.style.position = '';
+      leafCard.style.left = '';
+      leafCard.style.top = '';
+      leafCard.style.margin = '';
+      leafCard.style.zIndex = '';
+      leafCard.classList.remove('flipped');
+      messageInput.value = '';
+      signatureInput.value = '';
 
-      // Animate flying leaf with CSS transitions
-      requestAnimationFrame(() => {
-        wrapper.style.transition = 'transform 2s ease-in-out, opacity 2s ease-in-out';
-        wrapper.style.transform = 'translate(${dx}px, ${dy}px) scale(${finalScale}) rotate(${angle}deg)';
-        wrapper.style.opacity = '0';
-      });
-
-      // After flying animation completes
-      wrapper.addEventListener('transitionend', () => {
-        wrapper.remove();
-        overlay.style.display = 'none';
-
-        // Reset original leaf styles (including position and z-index)
-        leafCard.style.transition = 'none';
-        leafCard.style.transform = 'none';
-        leafCard.style.position = '';
-        leafCard.style.left = '';
-        leafCard.style.top = '';
-        leafCard.style.margin = '';
-        leafCard.style.zIndex = '';
-        leafCard.classList.remove('flipped');
-        messageInput.value = '';
-        signatureInput.value = '';
-
-        resolve();
-      }, { once: true });
+      resolve();
     });
   });
 }
 
-
-// — On send button click:
+// On send button click
 sendBtn.addEventListener('click', async () => {
   const message = messageInput.value.trim();
   const signature = signatureInput.value.trim();
 
-  // Validation: message min length and signature not empty
+  // Validate inputs
   if (message.length < 15) {
     alert('Please write at least 3 sentences in your message.');
     return;
@@ -340,32 +253,33 @@ sendBtn.addEventListener('click', async () => {
     return;
   }
 
-  // Pick random branch coordinate
+  // Pick a random branch to attach leaf to
   const branch = pickRandomBranch();
 
-const treeRect = glowTree.getBoundingClientRect();
-const relativeBranch = {
-	x: branch.x / treeRect.width,
-	y: branch.y / treeRect.height
-};
+  // Calculate relative normalized position for saving to Firestore (values 0-1)
+  const treeRect = glowTree.getBoundingClientRect();
+  const relativePosition = {
+    x: branch.x / treeRect.width,
+    y: branch.y / treeRect.height
+  };
 
-  // Save data first
   try {
-    await saveLeafToFirestore(message, signature, relativeBranch);
+    // Save leaf data with normalized position
+    await saveLeafToFirestore(message, signature, relativePosition);
   } catch (error) {
     alert('Error saving your message. Please try again.');
     console.error(error);
     return;
   }
 
-  // Animate leaf flying to branch
-  flyToTree(relativeBranch, message, signature);
+  // Animate leaf flying to branch on tree
+  await flyToTree(branch);
 
-  // After animation, you could redirect or show success message
   alert('Thank you for your message! It has been added to the tree.');
+  // Optionally, redirect to tree page here if you want:
+  // window.location.href = 'treee.html';
 });
 </script>
-
 
 </body>
 </html>
