@@ -149,9 +149,18 @@ main {
   justify-content: center;
   padding: 20px;
   pointer-events: none;
-  top: -100px;
-  left: -10px;
+  top: 0px;
+  left: 0px;
   z-index: 2000;
+}
+
+.fly-leaf {
+  pointer-events: none;
+  z-index: 1001;
+}
+
+.leaf-wrapper {
+  transition: transform 2s ease-in-out, opacity 2s ease-in-out;
 }
 
 textarea, input {
@@ -235,7 +244,7 @@ footer {
 .fly-leaf {
   width: 150px;
   height: auto;
-  background-image: url('path/to/leaf.png');
+  background-image: url('leaf (2).png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
