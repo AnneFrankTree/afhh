@@ -223,7 +223,7 @@ function flyToTree(position, message, signature) {
     leafClone.style.opacity = "0";
   });
 
-  saveLeafData({ message, signature, position });
+  saveLeafToFirestore(message, signature, position);
 
   setTimeout(() => {
     leafClone.remove();
@@ -254,8 +254,8 @@ function flyToTree(position, message, signature) {
 
     // Fix: make leaf fixed with high z-index to appear above overlay
     leafCard.style.position = 'fixed';
-    leafCard.style.left = ${startX}px;
-    leafCard.style.top = ${startY}px;
+    leafCard.style.left = '${startX}px';
+    leafCard.style.top = '${startY}px';
     leafCard.style.margin = '0';
     leafCard.style.zIndex = '1001';
 
@@ -265,7 +265,7 @@ function flyToTree(position, message, signature) {
     leafCard.style.transition = 'transform 1s ease-in-out';
     leafCard.style.transformOrigin = 'top left';
     // Trigger transform: move and scale leaf
-    leafCard.style.transform = translate(${dx}px, ${dy}px) scale(${finalScale});
+    leafCard.style.transform = 'translate(${dx}px, ${dy}px) scale(${finalScale})';
 
     // Wait for transition to finish
     leafCard.addEventListener('transitionend', function handler() {
@@ -276,10 +276,10 @@ function flyToTree(position, message, signature) {
       const wrapper = document.createElement('div');
       wrapper.classList.add('leaf-wrapper');
       wrapper.style.position = 'fixed';
-      wrapper.style.left = ${startX}px;
-      wrapper.style.top = ${startY}px;
-      wrapper.style.width = ${leafRect.width}px;
-      wrapper.style.height = ${leafRect.height}px;
+      wrapper.style.left = '${startX}px';
+      wrapper.style.top = '${startY}px';
+      wrapper.style.width = '${leafRect.width}px';
+      wrapper.style.height = '${leafRect.height}px';
       wrapper.style.pointerEvents = 'none'; // prevent interaction
       wrapper.style.zIndex = '1002'; // above original leaf and overlay
       wrapper.appendChild(flyingLeaf);
@@ -297,7 +297,7 @@ function flyToTree(position, message, signature) {
       // Animate flying leaf with CSS transitions
       requestAnimationFrame(() => {
         wrapper.style.transition = 'transform 2s ease-in-out, opacity 2s ease-in-out';
-        wrapper.style.transform = translate(${dx}px, ${dy}px) scale(${finalScale}) rotate(${angle}deg);
+        wrapper.style.transform = 'translate(${dx}px, ${dy}px) scale(${finalScale}) rotate(${angle}deg)';
         wrapper.style.opacity = '0';
       });
 
@@ -344,7 +344,7 @@ sendBtn.addEventListener('click', async () => {
   const branch = pickRandomBranch();
 
 const treeRect = glowTree.getBoundingClientRect();
-const relativeBrancxh = {
+const relativeBranch = {
 	x: branch.x / treeRect.width,
 	y: branch.y / treeRect.height
 };
@@ -359,7 +359,7 @@ const relativeBrancxh = {
   }
 
   // Animate leaf flying to branch
-  await animateLeafToBranch(branch);
+  flyToTree(relativeBranch, message, signature);
 
   // After animation, you could redirect or show success message
   alert('Thank you for your message! It has been added to the tree.');
